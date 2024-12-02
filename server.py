@@ -101,8 +101,13 @@ class Server:
                     self.send_object(client_socket, {"type": "success", "data": f"Joined channel {channel}"})
 
                 elif command == "list":
-                    channels_info = "\n".join([f"{ch}: {len(members)} users" for ch, members in self.channels.items()])
-                    self.send_object(client_socket, {"type": "message", "data": channels_info})
+                    """If there are no channels, it doesn't bother searching the list and sends this"""
+                    if not self.channels:
+                        self.send_object(client_socket, {"type": "message", "data": "No channels available."})
+                    else:
+                        """Searches for the channels and checks the length of their client lists"""
+                        channels_info = "\n".join([f"{ch}: {len(channel.clients)} users" for ch, channel in self.channels.items()])
+                        self.send_object(client_socket, {"type": "message", "data": f"Channels:\n{channels_info}"})
 
                 elif command == "leave":
                     if current_channel:
