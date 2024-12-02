@@ -92,7 +92,12 @@ class Server:
                     if current_channel:
                         self.channels[current_channel].remove(client_socket)
                         self.broadcast(f"{nickname} has left the channel.", current_channel)
+
+                        """Remove the channel from the clients channel list"""
+                        self.send_object(client_socket, {"type": "update", "action": "remove_channel", "channel": current_channel})
+
                         current_channel = None
+
                         self.clients[client_socket]['channel'] = None
                     self.send_object(client_socket, {"type": "success", "data": "Left the channel."})
 
@@ -103,7 +108,7 @@ class Server:
                     help_text = (
                         "/nick <nickname>: Set your nickname\n"
                         "/join <channel>: Join a channel\n"
-                        "/list: List all channels\n"
+                        "/list: List all channels and the number of users\n"
                         "/leave: Leave the current channel\n"
                         "/quit: Disconnect\n"
                     )

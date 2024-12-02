@@ -6,7 +6,28 @@ import sys
 class Client:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.channels = []
 
+    def add_channel(self, channel_name):
+        """Limit number of channels a client can be a part of to 10 like the RFC1459 suggests"""
+        if len(self.channels) >= 10:
+            print(f"You are a part of 10 channels already. Please leave one to join this channel.")
+            return False
+        if channel_name not in self.channels:
+            self.channels.append(channel_name)
+            return True
+        else:
+            print(f"Already in channel '{channel_name}'.")
+            return False
+        
+    def remove_channel(self, channel_name):
+        """Remove a channel from the client's list through leave"""
+        if channel_name in self.channels:
+            self.channels.remove(channel_name)
+            print(f"Left channel: {channel_name}")
+        else:
+            print(f"Not in channel '{channel_name}'.")
+    
     def send_object(self, data):
         self.client.send(pickle.dumps(data))
 
@@ -20,6 +41,9 @@ class Client:
                     print(f"Error: {data['data']}")
                 elif data['type'] == "success":
                     print(f"Success: {data['data']}")
+                elif data['type'] == "update":
+                    if data['action'] == "remove_channel":
+                        self.remove_channel(data['channel'])
             except:
                 print("Disconnected from server.")
                 self.client.close()

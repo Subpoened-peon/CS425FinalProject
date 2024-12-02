@@ -8,6 +8,19 @@ Jered Fennell - Nicholas Merritt - Atharva Pargaonkar
 - **`server.py`**:
 
 - **`client.py`**:
+    This file handles many things related to the client. Things like the clients list of channels that they are joined to.
 
 - **`channels.py`**:
+    This file handles things related to the channels. 
+ ## Testing
 
+
+ ## Reflections
+
+ ### Nicholas Merritt
+
+ ### Atharva Pargaonkar
+
+ ### Jered Fennell
+
+  
