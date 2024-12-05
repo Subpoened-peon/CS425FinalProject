@@ -32,6 +32,7 @@ Throughout this process, print statements helped confirm that the changes were f
  ### Nicholas Merritt
 
  ### Atharva Pargaonkar
+This project deepened my understanding of IRC-style communication and multithreaded server design. Implementing commands like /join, /nick, and /list helped me explore how chat protocols structure user interactions. Developing a multithreaded server taught me to manage multiple clients simultaneously, ensuring smooth and responsive communication.
 
  ### Jered Fennell
 
