@@ -25,7 +25,6 @@ class Channel:
             
             # Once the last client leaves, the server should have the channel be removed
             if len(self.clients) == 0:
-                self.broadcast(f"Channel {self.name} is being deleted as it has no more users.", sender_socket=None)
                 server.remove_channel(self.name)  # Notify the server to delete the channel
 
     def broadcast(self, message, sender_socket=None):

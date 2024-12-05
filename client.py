@@ -5,7 +5,8 @@ import sys
 
 class Client:
     def __init__(self):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client = None
+        self.connected = False
         self.channels = []
 
     def add_channel(self, channel_name):
@@ -45,83 +46,82 @@ class Client:
                     if data['action'] == "remove_channel":
                         self.remove_channel(data['channel'])
             except:
-                print("Disconnected from server.")
                 self.client.close()
                 break
 
-    def start(self, server_name, port):
+    def connect_to_server(self, server_name, port):
+        """After using the connect command."""
         try:
-            self.client.connect((server_name, port))
-            connect = True
-            print("Connected to the server.")
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client.connect((server_name, int(port)))
+            self.connected = True
             threading.Thread(target=self.receive_messages, daemon=True).start()
+            print(f"Connected to {server_name}:{port}.")
+        except Exception as e:
+            print(f"Failed to connect to {server_name}:{port}. Error: {e}")
 
-            while True:
-                if not connect:
-                    print("please connect to chat server with \"/connect <server-name> [port#]\"")
-                command = input()
-                if command.startswith("/"):
-                    parts = command.split(" ", 1)
-                    cmd = parts[0][1:]
-                    args = parts[1:] if len(parts) > 1 else []
-                    if connect:
-                        self.send_object({"command": cmd, "args": args})
-                    if cmd == "quit":
-                        if connect:
-                            self.client.close()
-                            print("disconnected from server")
-                            connect = False
-                        else:
-                            break
-                    if cmd == "connect":
-                        if connect:
-                            print("already connected to server")
-                        else:
-                            if len(args) < 1 or len(args) > 2:
-                                print("args for connect invalid")
-                            else:
-                                self.client.connect(args[0],args[1] or 12345)
-                                connect = True
-                    if cmd == "help" and not connect:
-                        print("Client Commands:")
-                        print("/quit - disconnect for connected server or exit after connection")
-                        print("/connect <server-name> [port] - connect to the given server, port optional")
-                        print("/help print this help message")
+    def disconnected_mode(self):
+        """When first logging in, or disconnecting from a server, handle client here"""
+        print("Client ready. Use '/help' for commands.")
+        while not self.connected:
+            command = input("> ").strip()
+            if command.startswith("/"):
+                parts = command.split(" ", 1)
+                cmd = parts[0][1:]
+                args = parts[1:] if len(parts) > 1 else []
+                
+                if cmd == "connect":
+                    if len(args) == 0:
+                        print("Usage: /connect <server-name> [port#]")
+                    else:
+                        server_name = args[0]
+                        port = args[1] if len(args) > 1 else 12345
+                        self.connect_to_server(server_name, port)
+                elif cmd == "help":
+                    print("Available Commands:")
+                    print("/connect <server-name> [port] - Connect to a server")
+                    print("/quit - Exit the client")
+                    print("/help - Show this help message")
+                elif cmd == "quit":
+                    print("Exiting client.")
+                    return False
                 else:
-                    self.send_object({"command": None, "message": command})
-        except:
-            print("Failed to connect to server.")
-        finally:
-            self.client.close()
+                    print(f"Unknown command: {cmd}. Use /help for a list of commands.")
+            else:
+                print("Connect to a server before sending messages.")
+        return True
+
+    def connected_mode(self):
+        """Handle client commands when connected to a server."""
+        print("Connected to server. Use '/help' for server commands.")
+        while self.connected:
+            command = input("> ").strip()
+            if command.startswith("/"):
+                parts = command.split(" ", 1)
+                cmd = parts[0][1:]
+                args = parts[1:] if len(parts) > 1 else []
+                
+                if cmd == "quit":
+                    self.send_object({"command": cmd})
+                    print("Disconnected from server.")
+                    self.client.close()
+                    self.connected = False
+                elif cmd == "following":
+                    self.send_object({"command": cmd})
+                else:
+                    self.send_object({"command": cmd, "args": args})
+            else:
+                self.send_object({"command": None, "message": command})
+
+    def start(self):
+        """Main client loop."""
+        while True:
+            if not self.connected:
+                if not self.disconnected_mode():
+                    break
+            else:
+                self.connected_mode()
 
 if __name__ == "__main__":
-    print("!CHAT CLIENT STARTED!")
-    print("\"/help\" for list of client commands")
-    go = True
-    while True:
-        command = input()
-        if command.startswith("/"):
-            parts = command.split(" ", 1)
-            cmd = parts[0][1:]
-            args = parts[1:] if len(parts) > 1 else []
-            if cmd == "quit":
-                print("Exiting client")
-                go = False
-                break
-            if cmd == "connect":
-                if len(args) < 1 or len(args) > 2:
-                    print("args for connect invalid")
-                else:
-                    server_name = args[0]
-                    port = args[1] or 12345
-                    break
-            if cmd == "help":
-                print("Client Commands:")
-                print("/quit - disconnect for connected server or exit after connection")
-                print("/connect <server-name> [port] - connect to the given server, port optional")
-                print("/help print this help message")
-        else:
-            print("connect to a server before sending a message")
-    if go:
-        client = Client()
-        client.start(server_name, port)
+    client = Client()
+    client.start()
