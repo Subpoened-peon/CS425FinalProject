@@ -20,9 +20,13 @@ Jered Fennell - Nicholas Merritt - Atharva Pargaonkar
 
     
  ## Testing
-
+ 
 ### Manual Testing
-    A lot of testing was done this way. Once a change was made, we opened up server and then the client and joined the default server localhost and port # 12345. Once in we would go through the commands, check the one we adjusted, quit and reconnect again. This, along with some print statements, helped us determine if changes that were made were doing what we intended them to do. 
+
+A lot of testing was done manually. After making a change, we would start the server and the client, then connect to the default server on `localhost` at port `12345`.<br>
+From there, we would test the adjusted commands, quit the session, and reconnect to verify persistence.<br>
+Throughout this process, print statements helped confirm that the changes were functioning as intended.
+
  ## Reflections
 
  ### Nicholas Merritt
