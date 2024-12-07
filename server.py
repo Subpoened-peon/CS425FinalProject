@@ -5,6 +5,7 @@ import sys
 import signal
 from time import time
 from channels import Channel
+from threading import Lock
 
 class Server:
     def __init__(self, port=12345, debug_level=0):
@@ -14,8 +15,14 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((self.host, self.port))
         self.server.listen(5)
+
         self.clients = {}  # {client_socket: {'nickname': nickname, 'channel': channel}}
         self.channels = {}  # {channel_name: [client_sockets]}
+        
+        #Lock for threading
+        self.clients_lock = Lock()
+        self.channels_lock = Lock()
+
         self.shutdown_time = time() + 180  # Idle timeout (3 minutes)
 
     def debug(self, message):
@@ -49,14 +56,15 @@ class Server:
 
     def remove_client(self, client_socket):
         """Remove a client from the server."""
-        if client_socket in self.clients:
-            info = self.clients.pop(client_socket)
-            nickname = info['nickname']
-            channel = info['channel']
-            """This next check sends to the channel to inform any other clients within it that the other client has left"""
-            if channel in self.channels and client_socket in self.channels[channel].clients:
-                self.channels[channel].remove_client(client_socket)
-                self.broadcast(f"{nickname} has left the channel.", channel)
+        with self.clients_lock:         # Lock the clients list
+            if client_socket in self.clients:
+                info = self.clients.pop(client_socket)
+                nickname = info['nickname']
+                channel = info['channel']
+                """This next check sends to the channel to inform any other clients within it that the other client has left"""
+                if channel in self.channels and client_socket in self.channels[channel].clients:
+                    self.channels[channel].remove_client(client_socket)
+                    self.broadcast(f"{nickname} has left the channel.", channel)
         client_socket.close()
 
     def handle_client(self, client_socket):
@@ -80,7 +88,8 @@ class Server:
                     if nickname in [info['nickname'] for info in self.clients.values()]:
                         self.send_object(client_socket, {"type": "error", "data": "Nickname already in use."})
                     else:
-                        self.clients[client_socket] = {"nickname": nickname, "channel": None}
+                        with self.clients_lock:
+                                self.clients[client_socket] = {"nickname": nickname, "channel": None}
                         self.send_object(client_socket, {"type": "success", "data": f"Nickname set to {nickname}"})
 
                 elif command == "join":
@@ -90,9 +99,10 @@ class Server:
                         continue
                     """Sets the channel name to the name the client added in join"""
                     channel_name = args[0]
-                    if channel_name not in self.channels:
-                        self.channels[channel_name] = Channel(channel_name)
-                    channel = self.channels[channel_name]
+                    with self.channels_lock:
+                        if channel_name not in self.channels:
+                            self.channels[channel_name] = Channel(channel_name)
+                        channel = self.channels[channel_name]
                     channel.add_client(client_socket)
                     self.clients[client_socket]['current_channel'] = channel_name
                     self.broadcast(f"{nickname} has joined the channel.", channel_name)
