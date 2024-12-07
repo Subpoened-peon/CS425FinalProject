@@ -32,7 +32,16 @@ class Client:
             print(f"Not in channel '{channel_name}'.")
 
     def send_object(self, data):
-        self.client.send(pickle.dumps(data))
+        if self.client.fileno() == -1:
+            print("Unexpected closed socket, you have been disconnected")
+            self.connected = False
+            return
+        try:
+            self.client.send(pickle.dumps(data))
+        except:
+            self.client.close()
+            self.connected = False
+            print("Unexpected closed socket, you have been disconnected")
 
     def receive_messages(self):
         while True:
