@@ -68,7 +68,7 @@ class Client:
         while not self.connected:
             command = input("> ").strip()
             if command.startswith("/"):
-                parts = command.split(" ", 1)
+                parts = command.split(" ", 5)
                 cmd = parts[0][1:]
                 args = parts[1:] if len(parts) > 1 else []
                 
@@ -99,7 +99,7 @@ class Client:
         while self.connected:
             command = input("> ").strip()
             if command.startswith("/"):
-                parts = command.split(" ", 1)
+                parts = command.split(" ", 5)
                 cmd = parts[0][1:]
                 args = parts[1:] if len(parts) > 1 else []
                 
