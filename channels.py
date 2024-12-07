@@ -22,9 +22,13 @@ class Channel:
  
         if client_socket in self.clients:
             self.clients.remove(client_socket)
-            
+            if self.clients:
+                """When a user leaves the channel, it should alert others in the channel that they have left"""
+                leaving_client_info = server.clients.get(client_socket, {})
+                nickname = leaving_client_info.get('nickname', 'A user')
+                self.broadcast(f"{nickname} has left the channel.", sender_socket=None)
             # Once the last client leaves, the server should have the channel be removed
-            if len(self.clients) == 0:
+            else:
                 server.remove_channel(self.name)  # Notify the server to delete the channel
 
     def broadcast(self, message, sender_socket=None):

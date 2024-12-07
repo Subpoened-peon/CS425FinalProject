@@ -7,7 +7,9 @@ class Client:
     def __init__(self):
         self.client = None
         self.connected = False
-        self.channels = []
+        self.channels = [] # Channels the client is a member of.
+        self.nickname = None
+        self.current_channel = None
 
     def add_channel(self, channel_name):
         """Limit number of channels a client can be a part of to 10 like the RFC1459 suggests"""
@@ -18,7 +20,7 @@ class Client:
             self.channels.append(channel_name)
             return True
         else:
-            print(f"Already in channel '{channel_name}'.")
+            print(f"Current Channel: '{channel_name}'.")
             return False
         
     def remove_channel(self, channel_name):
@@ -28,7 +30,7 @@ class Client:
             print(f"Left channel: {channel_name}")
         else:
             print(f"Not in channel '{channel_name}'.")
-    
+
     def send_object(self, data):
         self.client.send(pickle.dumps(data))
 

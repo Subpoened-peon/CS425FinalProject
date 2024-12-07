@@ -18,6 +18,8 @@ Jered Fennell - Nicholas Merritt - Atharva Pargaonkar
     - **`clients`**: This is a list of all the clients who are members of the channel. When the last one leaves, the channel is removed.
     - **`thread`**
 
+ ## Building
+
     
  ## Testing
  
@@ -25,12 +27,12 @@ Jered Fennell - Nicholas Merritt - Atharva Pargaonkar
 
 A lot of testing was done manually. After making a change, we would start the server and the client, then connect to the default server on `localhost` at port `12345`.<br>
 From there, we would test the adjusted commands, quit the session, and reconnect to verify persistence.<br>
-Throughout this process, print statements helped confirm that the changes were functioning as intended.
+Throughout this process, print statements helped confirm that the changes were functioning as intended. To check if multiple clients could use the same server and or channels, we would just have multiple instances of clients that connected/joined the same ones to use the messaging. 
 
  ## Reflections
 
  ### Nicholas Merritt
-
+It was nice to try and do something fully in python. I had worked with some scripts that were given to students for larger java projects, but never had I written a full project in it. It took a while to understand it and I've come to learn that it has some similar functionality to javascript. Getting used to how objects and messages are passed around can be a bit confusing at first, but I find it very convenient now. 
  ### Atharva Pargaonkar
 This project deepened my understanding of IRC-style communication and multithreaded server design. Implementing commands like /join, /nick, and /list helped me explore how chat protocols structure user interactions. Developing a multithreaded server taught me to manage multiple clients simultaneously, ensuring smooth and responsive communication.
 
