@@ -16,7 +16,7 @@ class Server:
         self.server.bind((self.host, self.port))
         self.server.listen(5)
 
-        self.clients = {}  # {client_socket: {'nickname': nickname, 'channel': channel}}
+        self.clients = {}  # {client_socket: {'nickname': nickname, 'current_channel': speaking channel, 'channels' : list of channels}}
         self.channels = {}  # {channel_name: [client_sockets]}
         
         #Lock for threading
@@ -60,7 +60,7 @@ class Server:
             if client_socket in self.clients:
                 info = self.clients.pop(client_socket)
                 nickname = info['nickname']
-                channel = info['channel']
+                channel = info['current_channel']
                 """This next check sends to the channel to inform any other clients within it that the other client has left"""
                 if channel in self.channels and client_socket in self.channels[channel].clients:
                     self.channels[channel].remove_client(client_socket)
@@ -72,7 +72,7 @@ class Server:
         self.shutdown_time = time() + 180  # Reset idle timer
 
         if client_socket not in self.clients:
-            self.clients[client_socket] = {'nickname': None, 'channel': None}
+            self.clients[client_socket] = {'nickname': None, 'current_channel': None, 'channels': []}
 
         try:
             self.debug(f"Client connected: {client_socket.getpeername()}")
@@ -89,7 +89,7 @@ class Server:
                         self.send_object(client_socket, {"type": "error", "data": "Nickname already in use."})
                     else:
                         with self.clients_lock:
-                                self.clients[client_socket] = {"nickname": nickname, "channel": None}
+                                self.clients[client_socket] = {"nickname": nickname, "current_channel": None}
                         self.send_object(client_socket, {"type": "success", "data": f"Nickname set to {nickname}"})
 
                 elif command == "join":
@@ -108,8 +108,10 @@ class Server:
                         channel = self.channels[channel_name]
                     channel.add_client(client_socket)
                     self.clients[client_socket]['current_channel'] = channel_name
+                    with self.clients_lock:
+                        self.clients[client_socket]["channels"] = [channel_name]
                     self.broadcast(f"{self.clients[client_socket]['nickname']} has joined the channel.", channel_name)
-                    self.send_object(client_socket, {"type": "success", "data": f"Joined channel {channel}"})
+                    self.send_object(client_socket, {"type": "success", "data": f"Joined channel {channel_name}"})
 
                 elif command == "list":
                     """If there are no channels, it doesn't bother searching the list and sends this"""
@@ -120,12 +122,18 @@ class Server:
                         channels_info = "\n".join([f"{ch}: {len(channel.clients)} users" for ch, channel in self.channels.items()])
                         self.send_object(client_socket, {"type": "message", "data": f"Channels:\n{channels_info}"})
 
+                #Fix default leave
                 elif command == "leave":
-                    if not args or not args[0].strip():
-                        self.send_object(client_socket, {"type": "error", "data": "You must specify a channel to leave. Usage: /leave <channel_name>."})
+                    if len(self.clients[client_socket]["channels"]) == 0:
+                        self.send_object(client_socket, {"type": "error", "data": "You are not a member of any channel"})
                         continue
-
-                    channel_name = args[0]
+                    if len(self.clients[client_socket]["channels"]) != 1:
+                        if not args or not args[0].strip():
+                            self.send_object(client_socket, {"type": "error", "data": "You must specify a channel to leave. Usage: /leave <channel_name>."})
+                            continue
+                        channel_name = args[0]
+                    else:
+                        channel_name = self.clients[client_socket]["channels"][0]
                     if channel_name not in self.channels:
                         self.send_object(client_socket, {"type": "error", "data": f"Channel '{channel_name}' does not exist."})
                         continue
