@@ -15,14 +15,14 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((self.host, self.port))
         self.server.listen(5)
-
+        self.server.settimeout(1)  # Non-blocking socket
         self.clients = {}  # {client_socket: {'nickname': nickname, 'current_channel': speaking channel, 'channels' : list of channels}}
         self.channels = {}  # {channel_name: [client_sockets]}
         
         #Lock for threading
         self.clients_lock = Lock()
         self.channels_lock = Lock()
-
+        self.shutdown = False
         self.shutdown_time = time() + 180  # Idle timeout (3 minutes)
 
     def debug(self, message):
@@ -191,23 +191,32 @@ class Server:
     def start(self):
         print(f"Server started on {self.host}:{self.port}")
         signal.signal(signal.SIGINT, self.graceful_shutdown)
-
-        while True:
-            if time() > self.shutdown_time:
-                print("Server idle for 3 minutes. Shutting down.")
-                self.graceful_shutdown(None, None)
-
+        while not self.shutdown:
             try:
                 client_socket, client_address = self.server.accept()
                 threading.Thread(target=self.handle_client, args=(client_socket,)).start()
-            except:
-                pass
+            except socket.timeout:
+                pass  # Timeout allows periodic checks for shutdown signals
+            except Exception as e:
+                self.debug(f"Error accepting connection: {e}")
+
+            # Check for idle timeout
+            if time() > self.shutdown_time and not self.clients:
+                print("Server idle for 3 minutes. Shutting down.")
+                self.graceful_shutdown(None, None)
 
     def graceful_shutdown(self, signum, frame):
-        print("Shutting down server.")
-        for client in self.clients.keys():
-            client.close()
+        """Shut down the server gracefully."""
+        self.shutdown = True
+        print("\nShutting down server gracefully...")
+        for client in list(self.clients.keys()):
+            try:
+                self.send_object(client, {"type": "message", "data": "Server is shutting down. Disconnecting..."})
+                client.close()
+            except Exception as e:
+                self.debug(f"Error closing client socket: {e}")
         self.server.close()
+        print("Server shutdown complete.")
         sys.exit(0)
 
 if __name__ == "__main__":
