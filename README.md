@@ -38,5 +38,8 @@ It was nice to try and do something fully in python. I had worked with some scri
 This project deepened my understanding of IRC-style communication and multithreaded server design. Implementing commands like /join, /nick, and /list helped me explore how chat protocols structure user interactions. Developing a multithreaded server taught me to manage multiple clients simultaneously, ensuring smooth and responsive communication.
 
  ### Jered Fennell
-
+    This project was a strange one for me, I don't use python for anything so I hand to learn the semantics and what the language 
+    required. I found the networking part of the project to be the least demanding, python makes sending data between the client 
+    and server very easy. For handling many things, the requirements of the project I thought were weirdly outline in the project 
+    specifications, and what was bing implemented from the course document, and what from the IRC protocol.
   
