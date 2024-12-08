@@ -65,7 +65,8 @@ class Server:
                 """This next check sends to the channel to inform any other clients within it that the other client has left"""
                 if channel in self.channels and client_socket in self.channels[channel].clients:
                     self.channels[channel].remove_client(client_socket, self)
-                    self.broadcast(f"{nickname} has left the channel.", channel)
+                    if channel in self.channels:
+                        self.broadcast(f"{nickname} has left the channel.", channel)
         client_socket.close()
 
     def handle_client(self, client_socket):
@@ -151,7 +152,6 @@ class Server:
                         self.clients[client_socket]['current_channel'] = None
     
                     channel.remove_client(client_socket, self)
-                    print("leaving channel")
                     self.clients[client_socket]["channels"].remove(channel_name)
 
                     self.send_object(client_socket, {"type": "success", "data": f"You have left the channel '{channel_name}'."})

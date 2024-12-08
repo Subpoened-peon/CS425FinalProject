@@ -4,6 +4,8 @@ Jered Fennell - Nicholas Merritt - Atharva Pargaonkar
 
 ## Link to demo
 
+https://youtu.be/VmY-dqbd0TE
+
 ## File/Folders Manifest
 
 - **`server.py`**:
