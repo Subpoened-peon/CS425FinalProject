@@ -27,6 +27,8 @@ class Client:
         """Remove a channel from the client's list through leave"""
         if channel_name in self.channels:
             self.channels.remove(channel_name)
+            if self.current_channel == channel_name:
+                self.current_channel = None  # Set current_channel to None or to another channel
             print(f"Left channel: {channel_name}")
         else:
             print(f"Not in channel '{channel_name}'.")
@@ -117,6 +119,11 @@ class Client:
                     print("Disconnected from server.")
                     self.client.close()
                     self.connected = False
+                elif cmd == "leave":
+                    if args:
+                        self.send_object({"command": cmd, "channel": args})
+                    else:
+                        print("Usage: /leave <channel-name>")
                 elif cmd == "following":
                     self.send_object({"command": cmd})
                 else:

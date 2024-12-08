@@ -22,7 +22,9 @@ https://youtu.be/VmY-dqbd0TE
     - **`thread`**
 
  ## Building
-
+    1. Clone the Git repository
+    2. Run the Server with the command : `python server.py`
+    3. Run the Clients with the command : `python Client.py`
     
  ## Testing
  
