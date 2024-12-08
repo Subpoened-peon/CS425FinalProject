@@ -7,7 +7,8 @@ Jered Fennell - Nicholas Merritt - Atharva Pargaonkar
 ## File/Folders Manifest
 
 - **`server.py`**:
-
+    This file implements a multithreaded chat server that allows clients to connect, set nicknames, and join or create channels for group communication. Each client is handled in a separate thread, enabling simultaneous interactions, while shared resources like client and channel data are protected using threading locks. The server supports commands like `/nick`, `/join`, `/leave`, and `/list`, facilitating channel management and message broadcasting, and includes idle timeout and graceful shutdown functionality.
+    
 - **`client.py`**:
     This file handles many things related to the client. Things like the client's list of channels that they are joined to. Clients have these key things:
     - **`nickname`**: This is assigned to the client after the nickname command. Each client is unique beforehand.
