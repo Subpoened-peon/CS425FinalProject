@@ -22,6 +22,7 @@ class Server:
         #Lock for threading
         self.clients_lock = Lock()
         self.channels_lock = Lock()
+        self.threads = []
         self.shutdown = False
         self.shutdown_time = time() + 180  # Idle timeout (3 minutes)
 
@@ -150,6 +151,7 @@ class Server:
                         self.clients[client_socket]['current_channel'] = None
     
                     channel.remove_client(client_socket, self)
+                    print("leaving channel")
                     self.clients[client_socket]["channels"].remove(channel_name)
 
                     self.send_object(client_socket, {"type": "success", "data": f"You have left the channel '{channel_name}'."})
@@ -194,7 +196,9 @@ class Server:
         while not self.shutdown:
             try:
                 client_socket, client_address = self.server.accept()
-                threading.Thread(target=self.handle_client, args=(client_socket,)).start()
+                thread = threading.Thread(target=self.handle_client, args=(client_socket,))
+                thread.start()
+                self.threads.append(thread)
             except socket.timeout:
                 pass  # Timeout allows periodic checks for shutdown signals
             except Exception as e:
@@ -216,6 +220,9 @@ class Server:
             except Exception as e:
                 self.debug(f"Error closing client socket: {e}")
         self.server.close()
+        #explicitly close threads
+        for thread in list(self.threads):
+            thread.join()
         print("Server shutdown complete.")
         sys.exit(0)
 
