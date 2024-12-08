@@ -63,7 +63,7 @@ class Server:
                 channel = info['current_channel']
                 """This next check sends to the channel to inform any other clients within it that the other client has left"""
                 if channel in self.channels and client_socket in self.channels[channel].clients:
-                    self.channels[channel].remove_client(client_socket)
+                    self.channels[channel].remove_client(client_socket, self)
                     self.broadcast(f"{nickname} has left the channel.", channel)
         client_socket.close()
 
@@ -89,7 +89,7 @@ class Server:
                         self.send_object(client_socket, {"type": "error", "data": "Nickname already in use."})
                     else:
                         with self.clients_lock:
-                                self.clients[client_socket] = {"nickname": nickname, "current_channel": None}
+                                self.clients[client_socket]["nickname"] = nickname
                         self.send_object(client_socket, {"type": "success", "data": f"Nickname set to {nickname}"})
 
                 elif command == "join":
@@ -109,7 +109,11 @@ class Server:
                     channel.add_client(client_socket)
                     self.clients[client_socket]['current_channel'] = channel_name
                     with self.clients_lock:
-                        self.clients[client_socket]["channels"] = [channel_name]
+                        if channel_name not in self.clients[client_socket]["channels"]:
+                            if len(self.clients[client_socket]["channels"]) == 0:
+                                self.clients[client_socket]["channels"] = [channel_name]
+                            else:
+                                self.clients[client_socket]["channels"].append(channel_name)
                     self.broadcast(f"{self.clients[client_socket]['nickname']} has joined the channel.", channel_name)
                     self.send_object(client_socket, {"type": "success", "data": f"Joined channel {channel_name}"})
 
@@ -122,7 +126,6 @@ class Server:
                         channels_info = "\n".join([f"{ch}: {len(channel.clients)} users" for ch, channel in self.channels.items()])
                         self.send_object(client_socket, {"type": "message", "data": f"Channels:\n{channels_info}"})
 
-                #Fix default leave
                 elif command == "leave":
                     if len(self.clients[client_socket]["channels"]) == 0:
                         self.send_object(client_socket, {"type": "error", "data": "You are not a member of any channel"})
@@ -147,6 +150,7 @@ class Server:
                         self.clients[client_socket]['current_channel'] = None
     
                     channel.remove_client(client_socket, self)
+                    self.clients[client_socket]["channels"].remove(channel_name)
 
                     self.send_object(client_socket, {"type": "success", "data": f"You have left the channel '{channel_name}'."})
 
